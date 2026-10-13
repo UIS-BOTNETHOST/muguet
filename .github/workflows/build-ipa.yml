@@ -1,0 +1,45 @@
+name: Build Muguet IPA
+
+on:
+  workflow_dispatch:
+    inputs:
+      game_zip_url:
+        description: 'Direct download URL for game.zip'
+        required: true
+        type: string
+      bundle_id:
+        description: 'Bundle ID (e.g. com.dev.muguet)'
+        required: true
+        default: 'com.dev.muguet'
+
+jobs:
+  build:
+    runs-on: macos-14
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install Dependencies
+        run: brew install xcodegen
+
+      - name: Configure Rust
+        run: |
+          rustup toolchain install 1.98.1
+          rustup default 1.98.1
+          rustup target add aarch64-apple-ios --toolchain 1.98.1
+
+      - name: Download Game Assets
+        run: |
+          curl -L "${{ inputs.game_zip_url }}" -o game.zip
+          unzip -l game.zip | head -n 20
+
+      - name: Compile and Build IPA
+        run: |
+          chmod +x make-ios.sh build.sh
+          FREE=1 BUNDLE_ID="${{ inputs.bundle_id }}" ./make-ios.sh game.zip --ipa
+
+      - name: Upload IPA Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: Muguet-IPA
+          path: build/Muguet.ipa
