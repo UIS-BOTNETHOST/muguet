@@ -1,16 +1,9 @@
 name: Build Muguet IPA
 
 on:
+  push:
+    branches: [ main ]
   workflow_dispatch:
-    inputs:
-      game_zip_url:
-        description: 'Direct download URL for game.zip'
-        required: true
-        type: string
-      bundle_id:
-        description: 'Bundle ID (e.g. com.dev.muguet)'
-        required: true
-        default: 'com.dev.muguet'
 
 jobs:
   build:
@@ -19,7 +12,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Install Dependencies
+      - name: Install Build Dependencies
         run: brew install xcodegen
 
       - name: Configure Rust
@@ -30,13 +23,13 @@ jobs:
 
       - name: Download Game Assets
         run: |
-          curl -L "${{ inputs.game_zip_url }}" -o game.zip
-          unzip -l game.zip | head -n 20
+          curl -L "https://www.dropbox.com/scl/fi/pwqnxw93q79crbk3nzlu3/game.zip?rlkey=zwkulv33cwgh71i89pkagzy4z&st=2v1mt2ou&dl=1" -o game.zip
+          unzip -l game.zip | head -n 25
 
-      - name: Compile and Build IPA
+      - name: Compile and Package IPA
         run: |
           chmod +x make-ios.sh build.sh
-          FREE=1 BUNDLE_ID="${{ inputs.bundle_id }}" ./make-ios.sh game.zip --ipa
+          FREE=1 BUNDLE_ID="com.dev.muguet" ./make-ios.sh game.zip --ipa
 
       - name: Upload IPA Artifact
         uses: actions/upload-artifact@v4
